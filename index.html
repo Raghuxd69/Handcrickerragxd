@@ -1,219 +1,181 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hand Cricket</title>
   <style>
-    * { box-sizing: border-box; }
     body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f8ff;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #fff5ff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      width: 100%;
-      max-width: 400px;
-      padding: 20px;
-      text-align: center;
     }
     h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
+      background: #333;
+      color: white;
+      padding: 10px;
     }
-    .status {
-      font-weight: bold;
-      font-size: 18px;
-      margin: 20px 0 10px;
+    .scoreboard, .message, .controls, .result {
+      margin-top: 20px;
     }
-    .score {
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    .btn {
-      padding: 18px 0;
-      border-radius: 50px;
-      background-color: #add8f7;
-      border: none;
+    .scoreboard span {
+      display: inline-block;
+      margin: 0 15px;
       font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
     }
-    .btn:hover {
-      background-color: #91c6e7;
-    }
-    .reset-btn {
-      margin-top: 10px;
-      padding: 12px 25px;
-      font-size: 16px;
-      font-weight: bold;
-      background-color: #ffb6c1;
-      border: none;
-      border-radius: 20px;
+    .controls button {
+      font-size: 20px;
+      margin: 10px;
+      padding: 15px;
+      border-radius: 10px;
       cursor: pointer;
     }
-    .reset-btn:hover {
-      background-color: #ff9eb0;
+    #startBtn {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 20px;
     }
-    .result {
-      font-size: 18px;
-      color: green;
-      min-height: 24px;
+    #countdown {
+      font-size: 24px;
+      color: red;
       margin-top: 10px;
     }
-    .toss-buttons, .choice-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .toss-btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #add8f7;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-    }
-    .toss-btn:hover {
-      background-color: #91c6e7;
+    .disabled {
+      background: #888 !important;
+      pointer-events: none;
     }
   </style>
 </head>
-<body><div class="container">
-  <h1>Hand Cricket</h1>
-  <div class="status" id="status">Toss Time! Choose Heads or Tails</div>  <div class="toss-buttons" id="tossSection">
-    <button class="toss-btn" onclick="playerToss('Heads')">Heads</button>
-    <button class="toss-btn" onclick="playerToss('Tails')">Tails</button>
-  </div>  <div class="choice-buttons" id="batBowlChoice" style="display: none;">
-    <button class="toss-btn" onclick="startGame(true)">Bat</button>
-    <button class="toss-btn" onclick="startGame(false)">Bowl</button>
-  </div>  <div class="score" id="score" style="display: none;">Your Score: 0 | Computer Score: 0</div>  <div class="button-grid" id="gameButtons" style="display: none;">
-    <button class="btn" onclick="play(1)">1</button>
-    <button class="btn" onclick="play(2)">2</button>
-    <button class="btn" onclick="play(3)">3</button>
-    <button class="btn" onclick="play(4)">4</button>
-    <button class="btn" onclick="play(5)">5</button>
-    <button class="btn" onclick="play(6)">6</button>
-  </div><button class="reset-btn" onclick="resetGame()">🔄 Reset Game</button>
+<body>
+  <h1>Hand Cricket Game</h1>
+  <div class="scoreboard">
+    <span id="playerScore">Player: 0</span>
+    <span id="computerScore">Computer: 0</span>
+  </div>
+  <div class="message">
+    <h2 id="status">Click Start to Begin</h2>
+    <div id="countdown"></div>
+  </div>
+  <button id="startBtn">Start</button>
+  <div class="controls" id="controls"></div>
+  <div class="result">
+    <h2 id="resultMessage"></h2>
+    <button id="resetBtn" style="display:none;">Reset</button>
+  </div>  <script>
+    const controlsDiv = document.getElementById("controls");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const countdownDiv = document.getElementById("countdown");
+    const statusDiv = document.getElementById("status");
+    const playerScoreSpan = document.getElementById("playerScore");
+    const computerScoreSpan = document.getElementById("computerScore");
+    const resultMessage = document.getElementById("resultMessage");
 
-  <div class="result" id="result"></div>
-</div><script>
-  let playerScore = 0;
-  let computerScore = 0;
-  let isPlayerBatting = true;
-  let gameOver = false;
-  let lastPlayerChoice = null;
-  let inning = 1;
-  let target = 0;
+    let isPlayerBatting = true;
+    let playerScore = 0;
+    let computerScore = 0;
+    let firstInnings = true;
+    let gameOver = false;
 
-  function playerToss(choice) {
-    const result = Math.random() < 0.5 ? 'Heads' : 'Tails';
-    document.getElementById('tossSection').style.display = 'none';
-
-    if (choice === result) {
-      document.getElementById('status').innerText = `You won the toss! Choose to Bat or Bowl.`;
-      document.getElementById('batBowlChoice').style.display = 'flex';
-    } else {
-      const comp = Math.random() < 0.5 ? 'Bat' : 'Bowl';
-      isPlayerBatting = (comp === 'Bowl');
-      document.getElementById('status').innerText = `Computer won the toss and chose to ${comp}.`;
-      startGame(isPlayerBatting);
-    }
-  }
-
-  function startGame(playerBatsFirst) {
-    isPlayerBatting = playerBatsFirst;
-    document.getElementById('batBowlChoice').style.display = 'none';
-    document.getElementById('gameButtons').style.display = 'grid';
-    document.getElementById('score').style.display = 'block';
-    document.getElementById('result').innerText = '';
-    document.getElementById('score').innerText = `Your Score: 0 | Computer Score: 0`;
-    document.getElementById('status').innerText = isPlayerBatting ? "You are Batting - Inning 1" : "You are Bowling - Inning 1";
-  }
-
-  function getSmartComputerChoice(playerChoice) {
-    const chance = Math.random();
-    if (chance < 0.3) {
-      return playerChoice; // 30% chance to match (difficulty)
-    } else {
-      const options = [1,2,3,4,5,6].filter(n => n !== playerChoice);
-      return options[Math.floor(Math.random() * options.length)];
-    }
-  }
-
-  function play(playerChoice) {
-    if (gameOver) return;
-
-    lastPlayerChoice = playerChoice;
-    const computerChoice = getSmartComputerChoice(playerChoice);
-
-    if (isPlayerBatting) {
-      if (playerChoice === computerChoice) {
-        if (inning === 1) {
-          target = playerScore + 1;
-          isPlayerBatting = false;
-          inning = 2;
-          document.getElementById("status").innerText = `You're OUT! Target for computer: ${target}`;
-        } else {
-          gameOver = true;
-          document.getElementById("status").innerText = "You're OUT!";
-          document.getElementById("result").innerText = computerScore >= target ? "You Lose!" : "You Win!";
-        }
-      } else {
-        playerScore += playerChoice;
-      }
-    } else {
-      if (playerChoice === computerChoice) {
-        if (inning === 1) {
-          target = computerScore + 1;
-          isPlayerBatting = true;
-          inning = 2;
-          document.getElementById("status").innerText = `Computer OUT! Target for you: ${target}`;
-        } else {
-          gameOver = true;
-          document.getElementById("status").innerText = "Computer is OUT!";
-          document.getElementById("result").innerText = playerScore >= target ? "You Win!" : "You Lose!";
-        }
-      } else {
-        computerScore += computerChoice;
-        if (inning === 2 && !isPlayerBatting && computerScore >= target) {
-          gameOver = true;
-          document.getElementById("status").innerText = "Computer Reached Target!";
-          document.getElementById("result").innerText = "You Lose!";
-        }
+    function createButtons() {
+      controlsDiv.innerHTML = "";
+      for (let i = 1; i <= 6; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.setAttribute("data-run", i);
+        btn.onclick = handleRun;
+        controlsDiv.appendChild(btn);
       }
     }
 
-    document.getElementById("score").innerText = `Your Score: ${playerScore} | Computer Score: ${computerScore}`;
-  }
+    function handleRun(e) {
+      if (gameOver) return;
+      const playerRun = parseInt(e.target.getAttribute("data-run"));
 
-  function resetGame() {
-    playerScore = 0;
-    computerScore = 0;
-    inning = 1;
-    target = 0;
-    isPlayerBatting = true;
-    gameOver = false;
-    lastPlayerChoice = null;
+      let computerRun;
+      const chance = Math.random();
+      if (chance < 0.3) {
+        computerRun = playerRun;
+      } else {
+        const options = [1, 2, 3, 4, 5, 6].filter(n => n !== playerRun);
+        computerRun = options[Math.floor(Math.random() * options.length)];
+      }
 
-    document.getElementById("status").innerText = "Toss Time! Choose Heads or Tails";
-    document.getElementById("tossSection").style.display = 'flex';
-    document.getElementById("batBowlChoice").style.display = 'none';
-    document.getElementById("gameButtons").style.display = 'none';
-    document.getElementById("score").style.display = 'none';
-    document.getElementById("result").innerText = '';
-  }
-</script></body>
+      if (playerRun === computerRun) {
+        if (firstInnings) {
+          firstInnings = false;
+          isPlayerBatting = !isPlayerBatting;
+          statusDiv.textContent = isPlayerBatting ? "Second Innings: You Bat" : "Second Innings: Computer Bats";
+          disableButtons();
+          startCountdown();
+        } else {
+          endGame();
+        }
+        return;
+      }
+
+      if (isPlayerBatting) {
+        playerScore += playerRun;
+        playerScoreSpan.textContent = `Player: ${playerScore}`;
+        if (!firstInnings && playerScore > computerScore) endGame();
+      } else {
+        computerScore += computerRun;
+        computerScoreSpan.textContent = `Computer: ${computerScore}`;
+        if (!firstInnings && computerScore > playerScore) endGame();
+      }
+    }
+
+    function startCountdown() {
+      let count = 5;
+      countdownDiv.textContent = `Match starts in ${count}...`;
+      const interval = setInterval(() => {
+        count--;
+        countdownDiv.textContent = `Match starts in ${count}...`;
+        if (count === 0) {
+          clearInterval(interval);
+          countdownDiv.textContent = "";
+          enableButtons();
+        }
+      }, 1000);
+    }
+
+    function disableButtons() {
+      Array.from(controlsDiv.children).forEach(btn => {
+        btn.classList.add("disabled");
+      });
+    }
+
+    function enableButtons() {
+      Array.from(controlsDiv.children).forEach(btn => {
+        btn.classList.remove("disabled");
+      });
+    }
+
+    function endGame() {
+      gameOver = true;
+      disableButtons();
+      startBtn.classList.add("disabled");
+      resetBtn.style.display = "inline-block";
+
+      if (playerScore > computerScore) {
+        resultMessage.textContent = "🎉 You Win!";
+      } else if (playerScore < computerScore) {
+        resultMessage.textContent = "💻 Computer Wins!";
+      } else {
+        resultMessage.textContent = "🤝 It's a Tie!";
+      }
+    }
+
+    startBtn.addEventListener("click", () => {
+      startBtn.classList.add("disabled");
+      statusDiv.textContent = isPlayerBatting ? "You Bat First" : "Computer Bats First";
+      createButtons();
+      startCountdown();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      location.reload();
+    });
+  </script></body>
 </html>
