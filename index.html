@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hand Cricket</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fff5ff;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      text-align: left;
+      margin: 20px;
+    }
+
+    .status {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 30px;
+    }
+
+    .score {
+      font-size: 16px;
+      margin: 10px 0 20px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 300px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    .btn {
+      padding: 20px 0;
+      border-radius: 50px;
+      background-color: #add8f7;
+      border: none;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #91c6e7;
+    }
+
+    .result {
+      font-size: 18px;
+      margin-top: 20px;
+      color: green;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Hand Cricket</h1>
+
+  <div class="status" id="status">Start Batting! Choose a number</div>
+  <div class="score" id="score">Your Score: 0 | Computer Score: 0</div>
+
+  <div class="button-grid">
+    <button class="btn" onclick="play(1)">1</button>
+    <button class="btn" onclick="play(2)">2</button>
+    <button class="btn" onclick="play(3)">3</button>
+    <button class="btn" onclick="play(4)">4</button>
+    <button class="btn" onclick="play(5)">5</button>
+    <button class="btn" onclick="play(6)">6</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    let playerScore = 0;
+    let computerScore = 0;
+    let isPlayerBatting = true;
+    let gameOver = false;
+    let lastPlayerChoice = null;
+
+    function getSmartComputerChoice() {
+      if (lastPlayerChoice && Math.random() < 0.6) {
+        return lastPlayerChoice; // Try to get player out
+      }
+      return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function play(playerChoice) {
+      if (gameOver) return;
+
+      lastPlayerChoice = playerChoice;
+      const computerChoice = getSmartComputerChoice();
+
+      if (isPlayerBatting) {
+        if (playerChoice === computerChoice) {
+          isPlayerBatting = false;
+          document.getElementById("status").innerText = "You're OUT! Now Computer bats.";
+        } else {
+          playerScore += playerChoice;
+        }
+      } else {
+        if (playerChoice === computerChoice) {
+          gameOver = true;
+          const resultText = computerScore > playerScore
+            ? "Computer Wins!"
+            : computerScore < playerScore
+            ? "You Win!"
+            : "It's a Tie!";
+          document.getElementById("status").innerText = "Game Over!";
+          document.getElementById("result").innerText = resultText;
+        } else {
+          computerScore += computerChoice;
+          if (computerScore > playerScore) {
+            gameOver = true;
+            document.getElementById("status").innerText = "Game Over!";
+            document.getElementById("result").innerText = "Computer Wins!";
+          }
+        }
+      }
+
+      document.getElementById("score").innerText = `Your Score: ${playerScore} | Computer Score: ${computerScore}`;
+    }
+  </script>
+
+</body>
+</html>
