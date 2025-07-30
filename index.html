@@ -5,42 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hand Cricket</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background-color: #fff5ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
       text-align: center;
     }
 
     h1 {
       font-size: 28px;
-      text-align: left;
-      margin: 20px;
+      margin-bottom: 10px;
     }
 
     .status {
       font-weight: bold;
       font-size: 18px;
-      margin-top: 30px;
+      margin: 20px 0 10px;
     }
 
     .score {
       font-size: 16px;
-      margin: 10px 0 20px;
+      margin-bottom: 20px;
     }
 
     .button-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 15px;
-      max-width: 300px;
-      margin: 0 auto;
-      padding-bottom: 40px;
+      margin-bottom: 20px;
     }
 
     .btn {
-      padding: 20px 0;
+      padding: 18px 0;
       border-radius: 50px;
       background-color: #add8f7;
       border: none;
@@ -54,31 +62,81 @@
       background-color: #91c6e7;
     }
 
+    .reset-btn {
+      margin-top: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #ffb6c1;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .reset-btn:hover {
+      background-color: #ff9eb0;
+    }
+
     .result {
       font-size: 18px;
-      margin-top: 20px;
       color: green;
       min-height: 24px;
+      margin-top: 10px;
+    }
+
+    .toss-buttons, .choice-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .toss-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #add8f7;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+    }
+
+    .toss-btn:hover {
+      background-color: #91c6e7;
     }
   </style>
 </head>
 <body>
 
-  <h1>Hand Cricket</h1>
+  <div class="container">
+    <h1>Hand Cricket</h1>
 
-  <div class="status" id="status">Start Batting! Choose a number</div>
-  <div class="score" id="score">Your Score: 0 | Computer Score: 0</div>
+    <div class="status" id="status">Toss Time! Choose Heads or Tails</div>
 
-  <div class="button-grid">
-    <button class="btn" onclick="play(1)">1</button>
-    <button class="btn" onclick="play(2)">2</button>
-    <button class="btn" onclick="play(3)">3</button>
-    <button class="btn" onclick="play(4)">4</button>
-    <button class="btn" onclick="play(5)">5</button>
-    <button class="btn" onclick="play(6)">6</button>
+    <div class="toss-buttons" id="tossSection">
+      <button class="toss-btn" onclick="playerToss('Heads')">Heads</button>
+      <button class="toss-btn" onclick="playerToss('Tails')">Tails</button>
+    </div>
+
+    <div class="choice-buttons" id="batBowlChoice" style="display: none;">
+      <button class="toss-btn" onclick="startGame(true)">Bat</button>
+      <button class="toss-btn" onclick="startGame(false)">Bowl</button>
+    </div>
+
+    <div class="score" id="score" style="display: none;">Your Score: 0 | Computer Score: 0</div>
+
+    <div class="button-grid" id="gameButtons" style="display: none;">
+      <button class="btn" onclick="play(1)">1</button>
+      <button class="btn" onclick="play(2)">2</button>
+      <button class="btn" onclick="play(3)">3</button>
+      <button class="btn" onclick="play(4)">4</button>
+      <button class="btn" onclick="play(5)">5</button>
+      <button class="btn" onclick="play(6)">6</button>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">🔄 Reset Game</button>
+    <div class="result" id="result"></div>
   </div>
-
-  <div class="result" id="result"></div>
 
   <script>
     let playerScore = 0;
@@ -87,9 +145,42 @@
     let gameOver = false;
     let lastPlayerChoice = null;
 
+    function playerToss(choice) {
+      const options = ['Heads', 'Tails'];
+      const result = options[Math.floor(Math.random() * 2)];
+      document.getElementById('tossSection').style.display = 'none';
+
+      if (choice === result) {
+        document.getElementById('status').innerText = `You won the toss! Choose to Bat or Bowl.`;
+        document.getElementById('batBowlChoice').style.display = 'flex';
+      } else {
+        const computerDecision = Math.random() < 0.5 ? 'Bat' : 'Bowl';
+        isPlayerBatting = (computerDecision === 'Bowl');
+        document.getElementById('status').innerText = `Computer won the toss and chose to ${computerDecision}.`;
+        startGame(isPlayerBatting);
+      }
+    }
+
+    function startGame(playerBatsFirst) {
+      isPlayerBatting = playerBatsFirst;
+      playerScore = 0;
+      computerScore = 0;
+      gameOver = false;
+      lastPlayerChoice = null;
+
+      document.getElementById('batBowlChoice').style.display = 'none';
+      document.getElementById('gameButtons').style.display = 'grid';
+      document.getElementById('score').style.display = 'block';
+      document.getElementById('result').innerText = '';
+      document.getElementById('score').innerText = `Your Score: 0 | Computer Score: 0`;
+      document.getElementById('status').innerText = isPlayerBatting
+        ? 'You are Batting. Choose a number.'
+        : 'You are Bowling. Choose a number.';
+    }
+
     function getSmartComputerChoice() {
       if (lastPlayerChoice && Math.random() < 0.6) {
-        return lastPlayerChoice; // Try to get player out
+        return lastPlayerChoice;
       }
       return Math.floor(Math.random() * 6) + 1;
     }
@@ -128,6 +219,21 @@
       }
 
       document.getElementById("score").innerText = `Your Score: ${playerScore} | Computer Score: ${computerScore}`;
+    }
+
+    function resetGame() {
+      playerScore = 0;
+      computerScore = 0;
+      isPlayerBatting = true;
+      gameOver = false;
+      lastPlayerChoice = null;
+
+      document.getElementById("status").innerText = "Toss Time! Choose Heads or Tails";
+      document.getElementById("tossSection").style.display = 'flex';
+      document.getElementById("batBowlChoice").style.display = 'none';
+      document.getElementById("gameButtons").style.display = 'none';
+      document.getElementById("score").style.display = 'none';
+      document.getElementById("result").innerText = '';
     }
   </script>
 
